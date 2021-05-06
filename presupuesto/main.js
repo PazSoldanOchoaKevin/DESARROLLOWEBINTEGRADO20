@@ -12,24 +12,50 @@
   firebase.initializeApp(config);
 
 var x2,x3;
+
+var db = firebase.firestore();
+LoadHistory();
+function AddPresupuesto(type, amount){
+    db.collection("presupuesto").add({
+        tipo: type,
+        monto: amount,
+        fecha: new Date().getTime()
+    })
+    .then(function(docRef){
+        //Imorimimos por consola si se guardo correctamente, y que nos muestre su ID de registro
+        console.log("El documento ha sido creado corectamente su ID es : ",docRef.id);
+        //Invocamos al metodo Limpoiar caja de texto
+        //LimpiarCajasDeTextos();
+        LoadHistory();
+    })
+    .catch(function (error) {
+    //Imprimimo por consola si hay un error y que nos muestre el porque
+    console.error("Error al crear el documento: ", error); 
+    });
+}
+
 // añadimos los valores a frirebase de formulario de ingreso
 document.getElementById("form1").addEventListener("submit", (e)=>{
 
     e.preventDefault();
+    var monto = document.getElementById("ingresosFirebase").value;
     var ingreso={
-        ingreso: document.getElementById("ingresosFirebase").value
+        ingreso: monto
     };
     firebase.database().ref("PresupuestoAPP/Ingresos").set(ingreso);
+    AddPresupuesto("Ingreso", monto);
     document.getElementById("ingresosFirebase").value="";
 });
 // añadimos los valores a frirebase de formulario de ingreso
 document.getElementById("form2").addEventListener("submit", (e)=>{
 
     e.preventDefault();
+    var monto = document.getElementById("egresosFirebase").value;
     var egresos={
-        egresos: document.getElementById("egresosFirebase").value
+        egresos: monto
     };  
     firebase.database().ref("PresupuestoAPP/Egresos").set(egresos);
+    AddPresupuesto("Egreso", monto);
     document.getElementById("egresosFirebase").value="";
 });
 
@@ -66,18 +92,14 @@ function read(){
                         }
                     }
                 }
-    
-        
-    
             
             });
             document.querySelector('#ingresos').innerHTML=`${x2}`;
+            document.getElementById('total').innerHTML=`${x2-x3}`;
+        });
         });
 
     }
-    
-
-
 
 
     firebase.database().ref("PresupuestoAPP/Egresos").child("egresos").on("value", function(value){
@@ -121,4 +143,20 @@ function read(){
     });
     
 
+}
+
+
+function LoadHistory(){
+    db.collection("presupuesto").onSnapshot((querySnapshot)=>{
+        var tableRef = document.getElementById('myTable').getElementsByTagName('tbody')[0];
+        var index = 1;
+        tableRef.innerHTML = "";
+        querySnapshot.forEach((doc)=>{
+            var data = doc.data();
+                tableRef.insertRow().innerHTML = 
+                "<th scope='row'>" + (index++) + "</th>" + 
+                "<td>" +data.tipo+ "</td>"+
+                "<td>" +data.monto+ "</td>";
+        });
+    });
 }
